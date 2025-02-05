@@ -53,3 +53,14 @@ plt.ylabel("Frecuencia")
 
 # Mostrar el gráfico
 plt.show()
+
+#DIAGRAMA DE SECTORES
+# Contar la frecuencia de cada medio de transporte
+conteo_mtrans = df["MTRANS"].value_counts()
+
+# Crear el gráfico de sectores
+plt.figure(figsize=(8, 8))
+plt.pie(conteo_mtrans.values, labels=conteo_mtrans.index, autopct="%1.1f%%", 
+        startangle=90, colors=["lightblue", "orange", "green", "red", "purple"])
+plt.title("Distribución de Medios de Transporte (MTRANS)")
+plt.show()

@@ -73,8 +73,6 @@ df_encoded = pd.get_dummies(df, columns=["CALC"], drop_first=False)
 
 
 
-
-
 # Mostrar un ejemplo de los datos codificados
 print("\nDatos después de aplicar One-Hot Encoding:")
 print(df_encoded.head())
