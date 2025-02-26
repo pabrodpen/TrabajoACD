@@ -53,6 +53,14 @@ df_encoded["REE"] = (
     + (5 * df_encoded["Gender"] - 161 * (1 - df_encoded["Gender"]))
 )
 
+# Calcular la correlación de todas las variables con NObeyesdad
+correlaciones = df_encoded.corr()["NObeyesdad"].sort_values(ascending=False)
+
+# Mostrar resultados
+print("\n📊 Correlación de todas las variables con el tipo de obesidad:")
+print(correlaciones)
+
+
 # 1. Identificación de valores nulos en las variables
 valores_nulos = df_encoded[["IMC", "Weight", "PBF", "REE"]].isnull().sum()
 porcentaje_nulos = (
