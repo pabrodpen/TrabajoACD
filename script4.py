@@ -1,7 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.preprocessing import MinMaxScaler, StandardScaler, OrdinalEncoder
 
 # Cargar el dataset
 df = pd.read_csv("resultados.csv")
@@ -61,17 +60,18 @@ print("\n📊 Correlación de todas las variables con el tipo de obesidad:")
 print(correlaciones)
 
 
-# 1. Identificación de valores nulos en las variables
-valores_nulos = df_encoded[["IMC", "Weight", "PBF", "REE"]].isnull().sum()
-porcentaje_nulos = (
-    df_encoded[["IMC", "Weight", "PBF", "REE"]].isnull().sum() / len(df_encoded)
-) * 100
-print("Valores nulos por columna:")
-print(valores_nulos)
-print("\nPorcentaje de valores nulos por columna:")
-print(porcentaje_nulos)
+# Identificación de valores nulos en las variables
+print("\n📌 Valores nulos antes de la imputación:")
+print(df_encoded[["IMC", "Weight", "PBF", "REE"]].isnull().sum())
 
-# 2. Identificación de errores en los datos
+# Imputar valores nulos con la **mediana**
+for col in ["IMC", "Weight", "PBF", "REE"]:
+    df_encoded[col] = df_encoded[col].fillna(df_encoded[col].median())
+
+print("\n✅ Valores nulos después de la imputación:")
+print(df_encoded[["IMC", "Weight", "PBF", "REE"]].isnull().sum())
+
+# Identificación de errores en los datos
 errores = {
     "Weight": df_encoded["Weight"] < 0,  # Peso negativo
     "IMC": df_encoded["IMC"] < 10,  # IMC poco realista
@@ -81,56 +81,43 @@ errores = {
 
 # Mostrar registros con errores
 for columna, condicion in errores.items():
-    print(f"\nErrores en la columna {columna}:")
+    print(f"\n❌ Errores en la columna {columna}:")
     print(df_encoded[condicion])
 
-# 3. Identificación de outliers con boxplots
-fig, axes = plt.subplots(1, 4, figsize=(16, 6))
+# Eliminamos registros con datos erróneos
+df_encoded = df_encoded[~df_encoded["Weight"].lt(0)]
+df_encoded = df_encoded[~df_encoded["IMC"].lt(10)]
+df_encoded = df_encoded[~df_encoded["PBF"].lt(0)]
+df_encoded = df_encoded[~df_encoded["REE"].lt(0)]
 
-# Graficamos boxplots para detectar outliers
-sns.boxplot(y=df_encoded["Weight"], ax=axes[0], color="lightblue")
-axes[0].set_title("Valores atípicos en Weight")
+# Visualización de outliers con boxplots
+fig, axes = plt.subplots(1, 4, figsize=(16, 5))
 
-sns.boxplot(y=df_encoded["IMC"], ax=axes[1], color="lightcoral")
-axes[1].set_title("Valores atípicos en IMC")
+columnas_outliers = ["Weight", "IMC", "PBF", "REE"]
+colores = ["lightblue", "lightcoral", "lightgreen", "lightyellow"]
 
-sns.boxplot(y=df_encoded["PBF"], ax=axes[2], color="lightgreen")
-axes[2].set_title("Valores atípicos en PBF")
-
-sns.boxplot(y=df_encoded["REE"], ax=axes[3], color="lightyellow")
-axes[3].set_title("Valores atípicos en REE")
+for i, col in enumerate(columnas_outliers):
+    sns.boxplot(y=df_encoded[col], ax=axes[i], color=colores[i])
+    axes[i].set_title(f"Valores atípicos en {col}")
 
 plt.tight_layout()
 plt.show()
 
-# 4. Tratamiento de valores nulos, errores y outliers
-# Imputar valores nulos con la media
-df_encoded["IMC"] = df_encoded["IMC"].fillna(df_encoded["IMC"].mean())
-df_encoded["Weight"] = df_encoded["Weight"].fillna(df_encoded["Weight"].mean())
-df_encoded["PBF"] = df_encoded["PBF"].fillna(df_encoded["PBF"].mean())
-df_encoded["REE"] = df_encoded["REE"].fillna(df_encoded["REE"].mean())
+# Tratamiento de outliers: Sustitución con la mediana
+for col in columnas_outliers:
+    Q1 = df_encoded[col].quantile(0.25)
+    Q3 = df_encoded[col].quantile(0.75)
+    IQR = Q3 - Q1
+    limite_inferior = Q1 - 1.5 * IQR
+    limite_superior = Q3 + 1.5 * IQR
 
-# 5. Corregir errores en datos
-# Eliminamos registros con datos erróneos
-df_encoded = df_encoded[~(df_encoded["Weight"] < 0)]
-df_encoded = df_encoded[~(df_encoded["IMC"] < 10)]
-df_encoded = df_encoded[~(df_encoded["PBF"] < 0)]
-df_encoded = df_encoded[~(df_encoded["REE"] < 0)]
+    # Sustituir valores atípicos con la mediana
+    mediana_valor = df_encoded[col].median()
+    df_encoded.loc[df_encoded[col] < limite_inferior, col] = mediana_valor
+    df_encoded.loc[df_encoded[col] > limite_superior, col] = mediana_valor
 
-# 6. Tratamiento de outliers
-# Limitar valores atípicos en columnas, sustituyendo por valores máximos/mínimos permitidos
-# Para simplificar, sustituimos outliers de IMC y PBF por percentiles 1% y 99%
+print("\n✅ Outliers corregidos con la mediana.")
 
-# Limitar outliers en IMC
-IMC_lower = df_encoded["IMC"].quantile(0.01)
-IMC_upper = df_encoded["IMC"].quantile(0.99)
-df_encoded["IMC"] = df_encoded["IMC"].clip(lower=IMC_lower, upper=IMC_upper)
-
-# Limitar outliers en PBF
-PBF_lower = df_encoded["PBF"].quantile(0.01)
-PBF_upper = df_encoded["PBF"].quantile(0.99)
-df_encoded["PBF"] = df_encoded["PBF"].clip(lower=PBF_lower, upper=PBF_upper)
-
-# 7. Mostrar el DataFrame limpio
-print("\nDataset después de limpieza:")
+# Mostrar el DataFrame limpio
+print("\n✅ Dataset final después de la limpieza:")
 print(df_encoded.head())
