@@ -121,3 +121,6 @@ print("\n✅ Outliers corregidos con la mediana.")
 # Mostrar el DataFrame limpio
 print("\n✅ Dataset final después de la limpieza:")
 print(df_encoded.head())
+
+
+# REGRESION LINEAL SIMPLE ELIMINANDO OUTLIERS PREVIAMENTE
